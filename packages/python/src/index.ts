@@ -222,6 +222,7 @@ export const build: BuildV3 = async ({
     files,
     handler: `${handlerPyFilename}.vc_handler`,
     runtime: pythonVersion.runtime,
+    environment: {},
   });
 
   return { output };

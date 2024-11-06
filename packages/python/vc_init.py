@@ -35,180 +35,103 @@ if 'handler' in __vc_variables or 'Handler' in __vc_variables:
         exit(1)
 
     from http.server import HTTPServer
-    from http.server import BaseHTTPRequestHandler
     import http
-    import socket
     import os
-    import json
-    import time
-    import base64
-    import functools
-    import contextvars
-    import logging
-    import builtins
-    import requests
-    from urllib.parse import urlparse
 
-    ipc_fd = int(os.getenv("VERCEL_IPC_FD", ""))
-    sock = socket.socket(fileno=ipc_fd)
+    if "VERCEL_IPC_FD" in os.environ:
+        import socket
+        import json
+        import base64
+        import contextvars
 
-    send_message = lambda message: sock.sendall((json.dumps(message) + '\0').encode())
-    storage = contextvars.ContextVar('storage', default=None)
-    fetch_id = 0
+        ipc_fd = int(os.getenv("VERCEL_IPC_FD", ""))
+        sock = socket.socket(fileno=ipc_fd)
 
-    def print_wrapper(func):
-        @functools.wraps(func)
-        def wrapper(*args, **kwargs):
-            context = storage.get()
-            send_message({
-                "type": "log",
-                "payload": {
-                    "context": {
-                        "invocationId": context['invocationId'],
-                        "requestId": context['requestId'],
-                    },
-                    "message": base64.b64encode(f"{args[0]}\n".encode()).decode(),
-                    "stream": "stderr" if "file" in kwargs and kwargs["file"] == sys.stderr else "stdout",
-                }
-            })
-        return wrapper
+        send_message = lambda message: sock.sendall((json.dumps(message) + '\0').encode())
+        storage = contextvars.ContextVar('storage', default=None)
+        fetch_id = 0
 
-    builtins.print = print_wrapper(builtins.print)
+        class Handler(base):
+            def do_GET(self):
+                invocationId = self.headers.get('x-vercel-internal-invocation-id')
+                requestId = int(self.headers.get('x-vercel-internal-request-id'))
 
-    def logging_wrapper(func):
-        @functools.wraps(func)
-        def wrapper(*args, **kwargs):
-            context = storage.get()
-            send_message({
-                "type": "log",
-                "payload": {
-                    "context": {
-                        "invocationId": context['invocationId'],
-                        "requestId": context['requestId'],
-                    },
-                    "message": base64.b64encode(f"{args[0]}\n".encode()).decode(),
-                    "level": "error" if func.__name__ == "error" else "warn" if func.__name__ == "warning" else "info",
-                }
-            })
-        return wrapper
+                token = storage.set({
+                    "invocationId": invocationId,
+                    "requestId": requestId,
+                })
 
-    logging.basicConfig(level=logging.INFO)
-    logging.info = logging_wrapper(logging.info)
-    logging.error = logging_wrapper(logging.error)
-    logging.warning = logging_wrapper(logging.warning)
+                try:
+                    super().do_GET()
+                finally:
+                    storage.reset(token)
 
-    def timed_request(func):
-        @functools.wraps(func)
-        def wrapper(self, method, url, *args, **kwargs):
-            global fetch_id
-            fetch_id += 1
-            parsed_url = urlparse(url)
-            start_time = time.perf_counter()
-
-            result = func(self, method, url, *args, **kwargs)
-
-            end_time = time.perf_counter()
-            elapsed_time = (end_time - start_time) * 1000
-            context = storage.get()
-            send_message({
-                "type": "metric",
-                "payload": {
-                    "context": {
-                        "invocationId": context['invocationId'],
-                        "requestId": context['requestId'],
-                    },
-                    "type": "fetch-metric",
+                send_message({
+                    "type": "end",
                     "payload": {
-                        "pathname": parsed_url.path,
-                        "search": parsed_url.query,
-                        "start": start_time,
-                        "duration": elapsed_time,
-                        "host": parsed_url.hostname,
-                        "statusCode": result.status_code,
-                        "method": method,
-                        "id": fetch_id,
+                        "context": {
+                            "invocationId": invocationId,
+                            "requestId": requestId,
+                        },
+                        "error": None,
                     }
-                }
-            })
-            return result
-        return wrapper
+                })
 
-    requests.Session.request = timed_request(requests.Session.request)
+        server = HTTPServer(('127.0.0.1', 0), Handler)
+        send_message({
+            "type": "server-started",
+            "payload": {
+                "initDuration": 0,
+                "httpPort": server.server_address[1],
+            }
+        })
+        server.serve_forever()
+    else:
+        print('using HTTP Handler')
+        from http.server import HTTPServer
+        import _thread
 
-    class Handler(base):
-        def do_GET(self):
-            invocationId = self.headers.get('x-vercel-internal-invocation-id')
-            requestId = int(self.headers.get('x-vercel-internal-request-id'))
+        server = HTTPServer(('127.0.0.1', 0), base)
+        port = server.server_address[1]
 
-            token = storage.set({
-                "invocationId": invocationId,
-                "requestId": requestId,
-            })
+        def vc_handler(event, context):
+            _thread.start_new_thread(server.handle_request, ())
+
+            payload = json.loads(event['body'])
+            path = payload['path']
+            headers = payload['headers']
+            method = payload['method']
+            encoding = payload.get('encoding')
+            body = payload.get('body')
+
+            if (
+                (body is not None and len(body) > 0) and
+                (encoding is not None and encoding == 'base64')
+            ):
+                body = base64.b64decode(body)
+
+            request_body = body.encode('utf-8') if isinstance(body, str) else body
+            conn = http.client.HTTPConnection('127.0.0.1', port)
+            try:
+                conn.request(method, path, headers=headers, body=request_body)
+            except (http.client.HTTPException, socket.error) as ex:
+                print ("Request Error: %s" % ex)
+            res = conn.getresponse()
+
+            return_dict = {
+                'statusCode': res.status,
+                'headers': format_headers(res.headers),
+            }
+
+            data = res.read()
 
             try:
-                super().do_GET()
-            finally:
-                storage.reset(token)
+                return_dict['body'] = data.decode('utf-8')
+            except UnicodeDecodeError:
+                return_dict['body'] = base64.b64encode(data).decode('utf-8')
+                return_dict['encoding'] = 'base64'
 
-            send_message({
-                "type": "end",
-                "payload": {
-                    "context": {
-                        "invocationId": invocationId,
-                        "requestId": requestId,
-                    },
-                    "error": None,
-                }
-            })
-
-    server = HTTPServer(('127.0.0.1', 0), Handler)
-    send_message({
-        "type": "server-started",
-        "payload": {
-            "initDuration": 0,
-            "httpPort": server.server_address[1],
-        }
-    })
-    server.serve_forever()
-
-    def vc_handler(event, context):
-        _thread.start_new_thread(server.handle_request, ())
-
-        payload = json.loads(event['body'])
-        path = payload['path']
-        headers = payload['headers']
-        method = payload['method']
-        encoding = payload.get('encoding')
-        body = payload.get('body')
-
-        if (
-            (body is not None and len(body) > 0) and
-            (encoding is not None and encoding == 'base64')
-        ):
-            body = base64.b64decode(body)
-
-        request_body = body.encode('utf-8') if isinstance(body, str) else body
-        conn = http.client.HTTPConnection('127.0.0.1', port)
-        try:
-            conn.request(method, path, headers=headers, body=request_body)
-        except (http.client.HTTPException, socket.error) as ex:
-            print ("Request Error: %s" % ex)
-        res = conn.getresponse()
-
-        return_dict = {
-            'statusCode': res.status,
-            'headers': format_headers(res.headers),
-        }
-
-        data = res.read()
-
-        try:
-            return_dict['body'] = data.decode('utf-8')
-        except UnicodeDecodeError:
-            return_dict['body'] = base64.b64encode(data).decode('utf-8')
-            return_dict['encoding'] = 'base64'
-
-        return return_dict
+            return return_dict
 
 elif 'app' in __vc_variables:
     if (
