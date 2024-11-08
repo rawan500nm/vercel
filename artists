@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Famous Artists</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@900&family=Merriweather&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  
+  <style>
+        /* Global Styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Playfair Display', serif;
+            background-color: #2C2C2C;
+            color: #f4f4f4;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Background Animation */
+        .background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .background img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            
+        }
+
+        @keyframes backgroundAnimation {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-20%); }
+        }
+
+        /* Header */
+        header {
+            padding: 20px;
+            background: rgba(26, 26, 26, 0.8);
+            text-align: center;
+            border-bottom: 2px solid #444;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        header h1 {
+            font-family: 'Merriweather', serif;
+            color: #f8cc8b;
+            font-size: 2.5rem;
+            letter-spacing: 2px;
+            animation: titleAnimation 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes titleAnimation {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        nav ul {
+            list-style: none;
+            margin-top: 10px;
+        }
+
+        nav ul li {
+            display: inline-block;
+            margin-right: 15px;
+            position: relative;
+        }
+
+        nav ul li a {
+            color: #FFDD93;
+            text-decoration: none;
+            font-size: 1.1rem;
+            transition: color 0.3s;
+            padding: 10px 15px;
+        }
+
+        nav ul li a:hover {
+            color: #F28A30;
+        }
+
+        /* Main */
+        main {
+            padding: 30px;
+            text-align: center;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            color: #FFDD93;
+            margin-bottom: 20px;
+        }
+
+        /* Large Image */
+        .medium-image img {
+            width: 50%;
+            max-width: 800px;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+            margin: 20px 0;
+        }
+
+        /* Sections */
+        section {
+            background-color: rgba(57, 57, 57, 0.9);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s;
+        }
+
+        section:hover {
+            transform: scale(1.02);
+        }
+
+        /* Artist List */
+        ul#artist-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        ul#artist-list li {
+            background-color: #444;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            transition: transform 0.3s, background-color 0.3s;
+        }
+
+        ul#artist-list li:hover {
+            background-color: #555;
+            transform: translateX(5px);
+        }
+
+        /* Artist Images */
+        .artist-images {
+            display: flex;flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .artist-images div {
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .artist-images img {
+            width: 150px;
+            border-radius: 10px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+            transition: transform 0.3s;
+        }
+
+        .artist-images div:hover img {
+            transform: scale(1.05);
+        }
+
+        .artist-images p {
+            margin-top: 8px;
+            font-size: 1rem;
+            color: #FFDD93;
+            font-weight: bold;
+        }
+
+        /* Footer */
+        footer {
+            background-color: rgba(26, 26, 26, 0.8);
+            text-align: center;
+            padding: 15px 0;
+            border-top: 2px solid #444;
+            color: #999;
+            font-size: 0.9rem;
+        }
+
+        /* Survey Form */
+        #art-survey {
+            margin-top: 20px;
+        }
+
+        #art-survey label {
+            font-weight: bold;
+            color: #FFDD93;
+        }
+
+        #art-survey input[type="radio"] {
+            margin-right: 8px;
+        }
+
+        #art-survey textarea {
+            width: 100%;
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #FFDD93;
+            background-color: #333;
+            color: #fff;
+        }
+
+        #art-survey input[type="submit"] {
+            background-color: #F28A30;
+            border: none;
+            color: #fff;
+            padding: 10px 20px;
+            font-size: 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #art-survey input[type="submit"]:hover {
+            background-color: #FFDD93;
+            color: #333;
+        
+    }
+
+
+    #kinetic-art {
+        text-align: center;
+        padding: 30px;
+        background-color: #2d2b2bb4;
+        border-radius: 8px;
+    }
+    .kinetic-container {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        margin-top: 20px;
+    }
+    .kinetic-piece {
+        width: 50px;
+        height: 50px;
+        background-color: #ffffff;
+        border-radius: 50%;
+    }
+    
+    @keyframes move {
+        0% { transform: translateY(0); }
+        100% { transform: translateY(-20px); }
+    }
+    ul#art-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        ul#art-list li {
+            background-color: #444;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            transition: transform 0.3s, background-color 0.3s;
+        }
+
+        ul#art-list li:hover {
+            background-color: #555;
+            transform: translateX(5px);
+        }
+
+        /* Artist Images */
+        .art-images {
+            display: flex;flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .art-images div {
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .art-images img {
+            width: 150px;
+            border-radius: 10px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+            transition: transform 0.3s;
+        }
+
+        .art-images div:hover img {
+            transform: scale(1.05);
+        }
+
+        .art-images p {
+            margin-top: 8px;
+            font-size: 1rem;
+            color: #FFDD93;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="background">
+        <img src="icon/ko.jpg" alt="Background Image">
+    </div>
+    <header>
+        <h1><i class="fas fa-paint-brush"></i> Famous Artists</h1>
+        <nav>
+            <ul>
+                <li><a href="#about"><i class="fas fa-info-circle"></i> About</a></li>
+                <li><a href="#artists"><i class="fas fa-paint-brush"></i> Artists</a></li>
+                <li><a href="#survey"><i class="fas fa-pencil-alt"></i> Survey</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <div class="medium-image">
+            <img src="icon/h2.jpg" alt="medium-image"> 
+        </div>
+        <section id="about">
+            <h2>About</h2>
+            <p>Discover the lives and works of history's most renowned artists.</p>
+        </section>
+
+        <section id="artists">
+            <h2>Featured Artists</h2>
+            <ul id="artist-list">
+                <li>1. Leonardo da Vinci - Known for masterpieces like the Mona Lisa.</li>
+                <li>2. Vincent van Gogh - us for Starry Night and expressive brushwork.</li>
+                <li>3. Pablo Picasso - Co-founder of Cubism, creator of Guernica.</li>
+                <li>4. Claude Monet - A founder of Impressionism, known for Water Lilies series.</li>
+                <li>5. Frida Kahlo - Noted for self-portraits and surreal symbolis
+                </ul>
+            
+                <div class="artist-images">
+                <div><img src="icon/mon.jpg" alt="Portrait of Leonardo da Vinci"><p>Leonardo da Vinci</p></div>
+                <div><img src="icon/van.jpg" alt="Vincent van Gogh painting"><p>Vincent van Gogh</p></div>
+                <div><img src="icon/p.jpg" alt="Pablo Picasso artwork"><p>Pablo Picasso</p></div>
+                <div><img src="icon/oo.jpg" alt="Claude Monet Water Lilies"><p>Claude Monet</p></div>
+                <div><img src="icon/j.jpg" alt="Frida Kahlo self-portrait"><p>Frida Kahlo</p></div>
+            </div>
+        </section>
+        
+        <section id="art-techniques">
+            <h2><i class="fas fa-laptop"></i> Art Techniques</h2>
+            <p>Art techniques refer to the methods and approaches used by artists to create their works. This can include everything from brushwork and layering to the application of mixed media. Understanding different techniques can enhance appreciation for artworks and the skills involved.</p>
+        </section>
+    </section>
+
+        <section id="Origins">
+            <h2>The Origins of the Artists</h2>
+            <ul id="art-list">
+                <li>1. Leonardo da Vinci - Born in Vinci, Italy (1452). Trained in Florence, he blended art with science.</li>
+                <li>2. Vincent van Gogh - Born in Zundert, Netherlands (1853). Known for his expressive, emotional style.</li>
+                <li>3. Pablo Picasso - Born in Málaga, Spain (1881). Innovator of Cubism, transforming modern art.</li>
+                <li>4. Claude Monet - Born in Paris, France (1840). Leader of Impressionism, focused on light and nature.</li>
+                <li>5. Frida Kahlo - Born in Coyoacán, Mexico (1907). Known for symbolic self-portraits and cultural themes.</li>
+                </ul>    
+                <div class="art-images">
+                <div><img src="icon/dav.jpg" alt="Portrait of Leonardo da Vinci"><p>Leonardo da Vinci</p></div>
+                <div><img src="icon/van66.jpg" alt="Vincent van Gogh painting"><p>Vincent van Gogh</p></div>
+                <div><img src="icon/pppp.jpg" alt="Pablo Picasso artwork"><p>Pablo Picasso</p></div>
+                <div><img src="icon/ccc.jpg" alt="Claude Monet Water Lilies"><p>Claude Monet</p></div>
+                <div><img src="icon/fff.jpg" alt="Frida Kahlo self-portrait"><p>Frida Kahlo</p></div>
+            </div>
+        </section>
+    </section>
+      
+
+    <section>
+                    <h2><i class="fas fa-palette"></i> Artistic Styles</h2>
+                
+                    <div class="artist-images">
+                       
+            <div>
+                <img src="icon/dor.jpg" alt="Impressionism" />
+                <p><strong>Impressionism:</strong> Focuses on capturing light and its changing qualities.</p>
+            </div>
+            <div>
+                <img src="icon/su.jpg" alt="Cubism" />
+                <p><strong>Cubism:</strong> Breaks objects into geometric shapes, offering multiple perspectives in one view.</p>
+            </div>
+            <div>
+                <img src="icon/poli.jpg" alt="Surrealism" />
+                <p><strong>Surrealism:</strong> Blends reality with dreams, creating fantastical and bizarre imagery.</p>
+            </div>
+        </section>
+           
+            <section id="kinetic-art">
+                <h3><i class="fas fa-cube"></i> Kinetic Art</h3>
+                <p>Kinetic art is a fascinating form that incorporates movement as part of the artwork. Artists like Alexander Calder and Theo Jansen have pushed the boundaries of art by integrating mechanics and movement into their creations, inviting viewers to engage in a dynamic experience.</p>
+                <div class="kinetic-container">
+                    <div class="kinetic-piece" style="animation: move 4s infinite alternate;"></div>
+                    <div class="kinetic-piece" style="animation: move 3s infinite alternate;"></div>
+                    <div class="kinetic-piece" style="animation: move 5s infinite alternate;"></div>
+                </div>
+            </section>
+        </section>
+        <section id="survey">
+                           <h2>Art Preference Survey</h2>
+
+                           <form id="art-survey" action="#" method="post">
+                               <label>What type of art do you prefer?</label><br>
+                               <input type="radio" id="painting" name="art-type" value="Painting">
+                               <label for="painting">Painting</label><br>
+                               <input type="radio" id="sculpture" name="art-type" value="Sculpture">
+                               <label for="sculpture">Sculpture</label><br>
+                               <input type="radio" id="photography" name="art-type" value="Photography">
+                               <label for="photography">Photography</label><br>
+                               <textarea id="comments" placeholder="Your comments..." rows="4"></textarea><br>
+                               <input type="submit" value="Submit">
+                           </form>
+                       </section>
+    </main>
+    <footer>
+        &copy; 2024 Famous Artists. All Rights Reserved.
+    </footer>
+</body>
+</html>
