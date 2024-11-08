@@ -1,5 +1,11 @@
 # @vercel/next
 
+## 4.3.19
+
+### Patch Changes
+
+- Stabilize Chained Prerenders ([#12507](https://github.com/vercel/vercel/pull/12507))
+
 ## 4.3.18
 
 ### Patch Changes
